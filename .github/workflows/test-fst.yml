@@ -1,0 +1,46 @@
+name: Test fst
+
+on:
+push:
+branches: [main]
+pull_request:
+branches: [main]
+
+jobs:
+build-and-test:
+runs-on: ubuntu-latest
+strategy:
+matrix:
+compiler: [gcc, musl-gcc]
+
+steps:  
+  - name: Checkout repository  
+    uses: actions/checkout@v3  
+
+  - name: Install dependencies  
+    run: |  
+      sudo apt update  
+      sudo apt install -y musl-tools build-essential  
+
+  - name: Compile fst  
+    run: |  
+      if [ "${{ matrix.compiler }}" = "gcc" ]; then  
+        gcc -O2 -o fst fst.c  
+      else  
+        musl-gcc -static -O2 -o fst fst.c  
+      fi  
+
+  - name: Create temporary test directory  
+    run: |  
+      mkdir -p tmp_test  
+      echo "Hello World" > tmp_test/file1.txt  
+      touch tmp_test/file2.txt  
+      mkdir tmp_test/empty_dir  
+      echo "Binary" | xxd -r -p > tmp_test/binary1.bin  
+
+  - name: Run fst  
+    run: |  
+      ./fst tmp_test -a -h  
+
+  - name: Clean up  
+    run: rm -rf tmp_test fst
